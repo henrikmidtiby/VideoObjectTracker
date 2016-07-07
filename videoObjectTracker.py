@@ -32,7 +32,7 @@ def main(videoFileToAnalyze, outputFile, orderOfMarker, sizeOfKernel):
         grayScaleImage = (cv2.split(frame)[0] + cv2.split(frame)[1] + cv2.split(frame)[2]) / 3.
 
         # Locate marker in image.
-        (xm,  ym)  = tracker.locateMarker(grayScaleImage)
+        (xm,  ym)  = tracker.locate_marker(grayScaleImage)
 
         # Write determined marker position to file.
         outputfile.write("%3d\t%3d\t%3d\n" % (counter, xm, ym))
