@@ -9,17 +9,17 @@ Date: 2015-11-14
 import cv2
 import MarkerTracker
 
-def main(videoFileToAnalyze, outputFile, orderOfMarker, sizeOfKernel):
+def main(video_file_to_analyze, output_file, order_of_marker, size_of_kernel):
     # Open video file for reading and output file for writing.
-    cap = cv2.VideoCapture(videoFileToAnalyze)
-    outputfile = open(outputFile, 'w')
+    cap = cv2.VideoCapture(video_file_to_analyze)
+    outputfile = open(output_file, 'w')
     
     # Initialize the marker tracker.
-    tracker = MarkerTracker.MarkerTracker(orderOfMarker,  sizeOfKernel,  1.0)
+    tracker = MarkerTracker.MarkerTracker(order_of_marker, size_of_kernel, 1.0)
 
     # Main loop
     counter = 0
-    while(cap.isOpened()):
+    while cap.isOpened():
         counter += 1
         # Read a new image from the file.
         ret, frame = cap.read()
@@ -28,11 +28,11 @@ def main(videoFileToAnalyze, outputFile, orderOfMarker, sizeOfKernel):
         if not ret:
             break
         
-        # Cnovert image to grayscale.
+        # Convert image to grayscale.
         grayScaleImage = (cv2.split(frame)[0] + cv2.split(frame)[1] + cv2.split(frame)[2]) / 3.
 
         # Locate marker in image.
-        (xm,  ym)  = tracker.locate_marker(grayScaleImage)
+        (xm,  ym) = tracker.locate_marker(grayScaleImage)
 
         # Write determined marker position to file.
         outputfile.write("%3d\t%3d\t%3d\n" % (counter, xm, ym))
@@ -49,10 +49,10 @@ def main(videoFileToAnalyze, outputFile, orderOfMarker, sizeOfKernel):
     return    
 
 # Launch the program.
-videoFileToAnalyze = 'input/2015-11-12 09.06.21.mp4'
-outputFile = 'output/positions.txt'
-orderOfMarker = 4
-sizeOfKernel = 51
-main(videoFileToAnalyze, outputFile, orderOfMarker, sizeOfKernel)
+video_file_to_analyze = 'input/2015-11-12 09.06.21.mp4'
+output_file = 'output/positions.txt'
+order_of_marker = 4
+size_of_kernel = 51
+main(video_file_to_analyze, output_file, order_of_marker, size_of_kernel)
     
 
