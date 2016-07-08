@@ -84,18 +84,15 @@ class MarkerTracker:
             orient = self.orientation + 2 * k * math.pi / self.order
             xm2 = int(xm + search_distance * math.cos(orient))
             ym2 = int(ym + search_distance * math.sin(orient))
-            if 0 < xm2 < frame.shape[0] and 0 < ym2 < frame.shape[1]:
-                try:
-                    intensity = frame[ym2, xm2]
-                    if intensity > max_value:
-                        max_value = intensity
-                        max_orientation = orient
-                except:
-                    print("determineMarkerOrientation: error: %d %d %d %d" % (ym2, xm2, frame.shape[1], frame.shape[0]))
-                    pass
+            try:
+                intensity = frame[ym2, xm2]
+                if intensity > max_value:
+                    max_value = intensity
+                    max_orientation = orient
+            except:
+                print("determineMarkerOrientation: error: %d %d %d %d" % (ym2, xm2, frame.shape[1], frame.shape[0]))
+                pass
 
-        # TODO (Henrik)
-        # Der er nogle problemer med at bestemme orienteringen af markøren.
         self.orientation = self.limit_angle_to_range(max_orientation)
         print("orientation: %5.2f" % self.orientation)
 
