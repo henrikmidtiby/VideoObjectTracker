@@ -126,11 +126,9 @@ class MarkerTracker:
 
         (xm, ym) = self.last_marker_location
 
-
-        #print "ym: ", ym, " xm: ", xm, " y1: ", self.y1, " y2:", self.y2, ",x1: ", self.x1, " x2:", self.x2
         try:
             frame_tmp = np.array(frame[ym-self.y1:ym+self.y2, xm-self.x1:xm+self.x2])
-        except(TypeError):
+        except TypeError:
             print "error"
             self.quality = 0.0
             return
@@ -139,12 +137,11 @@ class MarkerTracker:
 
         frame_w, frame_h = frame_img.shape
 
-        template = template[0:frame_h, 0:frame_w].copy().astype(np.uint8)
-
-        cv2.imshow("temp_kernel", template)
-        cv2.imshow("small_image", frame_img)
+        template = template[0:frame_h, 0:frame_w].astype(np.uint8)
 
         try:
+            cv2.imshow("temp_kernel", template)
+            cv2.imshow("small_image", frame_tmp)
             quality_match = cv2.matchTemplate(frame_img, template, cv2.TM_CCORR_NORMED) # cv.CV_TM_CCORR_NORMED shows best results
             self.quality = quality_match[0, 0]
             print("Quality: %5.2f" % self.quality)
