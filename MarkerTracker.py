@@ -119,7 +119,7 @@ class MarkerTracker:
 
         mask = 1-1*(t3 & t4)
 
-        template = ((img_t1_t2_diff * mask)*255).astype(np.uint8)
+        template = ((1-img_t1_t2_diff * mask)*255).astype(np.uint8)
 
         (xm, ym) = self.last_marker_location
 
