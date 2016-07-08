@@ -11,14 +11,14 @@ import MarkerTracker
 import math
 
 
-def main(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel):
+def main(video_file_to_analyze_filename, output_filename_input, order_of_marker_input, size_of_kernel_input):
     # Open video file for reading and output file for writing.
     cap = cv2.VideoCapture()
-    cap.open(video_file_to_analyze)
-    output_file = open(output_filename, 'w')
+    cap.open(video_file_to_analyze_filename)
+    output_file = open(output_filename_input, 'w')
 
     # Initialize the marker tracker.
-    tracker = MarkerTracker.MarkerTracker(order_of_marker, size_of_kernel, 1.0)
+    tracker = MarkerTracker.MarkerTracker(order_of_marker_input, size_of_kernel_input, 1.0)
 
     # Main loop
     counter = 0
@@ -32,23 +32,27 @@ def main(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel
             break
 
         # Convert image to grayscale.
-        # gray_scale_image = (cv2.split(frame)[0] + cv2.split(frame)[1] + cv2.split(frame)[2]) / 3.
         gray_scale_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Locate marker in image.
         (xm, ym) = tracker.locate_marker(gray_scale_image)
 
-        # Write determined marker position to file.
-        output_file.write("%3d\t%3d\t%3d\t%.2f\n" % (counter, xm, ym, tracker.orientation))
+        # Show and write to file information about the detected marker.
+        string_to_file = "%3d\t%3d\t%3d\t%.2f\t%.2f\n" % (counter, xm, ym, tracker.orientation, tracker.quality)
+        print(string_to_file[0:-1])
+        output_file.write(string_to_file)
 
-        # Mark the center of the marker and show the annotated image.
+        # Mark the center of the marker
         cv2.circle(frame, (xm, ym), 20, (255, 0, 255), -1)
 
+        # Mark the orientation of the detected marker
         dist = 50
         point1 = (xm, ym)
         point2 = (math.trunc(xm + dist * math.cos(tracker.orientation)),
                   math.trunc(ym + dist * math.sin(tracker.orientation)))
         cv2.line(frame, point1, point2, (255, 0, 255), 2)
+
+        # Show the annotated image.
         cv2.imshow('frame', frame)
 
         # Break the look if the key 'q' was pressed. 
@@ -62,7 +66,7 @@ def main(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel
 # Launch the program.
 # video_file_to_analyze = 'input/2015-11-12 09.06.21.mp4'
 video_file_to_analyze = '/home/henrik/Dropbox/Camera Uploads/2016-07-08 06.22.55.mp4'
-output_file = 'output/positions2.txt'
+output_filename = 'output/positions2.txt'
 order_of_marker = 6
 size_of_kernel = 201
-main(video_file_to_analyze, output_file, order_of_marker, size_of_kernel)
+main(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel)
