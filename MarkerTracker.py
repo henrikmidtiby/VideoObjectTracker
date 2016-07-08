@@ -117,9 +117,9 @@ class MarkerTracker:
         t3 = np.angle(self.KernelRemoveArmComplex * phase) < angle_threshold
         t4 = np.angle(self.KernelRemoveArmComplex * phase) > -angle_threshold
 
-        mask = 1-1*(t3 & t4)
+        mask = 1 - 1*(t3 & t4)
 
-        template = ((1-img_t1_t2_diff * mask)*255).astype(np.uint8)
+        template = ((1 - img_t1_t2_diff * mask)*255).astype(np.uint8)
 
         (xm, ym) = self.last_marker_location
 
@@ -137,11 +137,10 @@ class MarkerTracker:
         template = template[0:frame_h, 0:frame_w].astype(np.uint8)
 
         try:
-            cv2.imshow("temp_kernel", template)
-            cv2.imshow("small_image", frame_tmp)
-            quality_match = cv2.matchTemplate(frame_img, template, cv2.TM_CCORR_NORMED) # cv.CV_TM_CCORR_NORMED shows best results
+            # For the quality estimator cv2.TM_CCORR_NORMED shows best results.
+            quality_match = cv2.matchTemplate(frame_img, template, cv2.TM_CCORR_NORMED)
             self.quality = quality_match[0, 0]
-            print("Quality: %5.2f" % self.quality)
-        except:
+        except Exception as e:
             print("frame_img.shape: ", frame_img.shape)
             print("template.shape: ", template.shape)
+            print e
