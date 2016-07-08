@@ -89,12 +89,12 @@ class MarkerTracker:
                 if intensity > max_value:
                     max_value = intensity
                     max_orientation = orient
-            except:
+            except Exception as e:
                 print("determineMarkerOrientation: error: %d %d %d %d" % (ym2, xm2, frame.shape[1], frame.shape[0]))
+                print(e)
                 pass
 
         self.orientation = self.limit_angle_to_range(max_orientation)
-        print("orientation: %5.2f" % self.orientation)
 
     @staticmethod
     def limit_angle_to_range(angle):
@@ -105,42 +105,35 @@ class MarkerTracker:
         return angle
 
     def determine_marker_quality(self, frame):
-
-        phase = np.exp((self.limit_angle_to_range(-self.orientation))*1j)
-        angle_threshold = 3.14/(2*self.order)
-
-        t1 = (self.kernelComplex*np.power(phase, self.order)).real > self.threshold
-        t2 = (self.kernelComplex*np.power(phase, self.order)).real < -self.threshold
-
-        img_t1_t2_diff = t1.astype(np.float32) - t2.astype(np.float32)
-
-        t3 = np.angle(self.KernelRemoveArmComplex * phase) < angle_threshold
-        t4 = np.angle(self.KernelRemoveArmComplex * phase) > -angle_threshold
-
-        mask = 1 - 1*(t3 & t4)
-
-        template = ((1 - img_t1_t2_diff * mask)*255).astype(np.uint8)
-
-        (xm, ym) = self.last_marker_location
-
+        template = self.generate_template_for_quality_estimator()
         try:
-            frame_tmp = np.array(frame[ym-self.y1:ym+self.y2, xm-self.x1:xm+self.x2])
-        except TypeError:
-            print "error"
-            self.quality = 0.0
-            return
+            frame_img = self.extract_window_around_maker_location(frame)
+            frame_w, frame_h = frame_img.shape
+            template = template[0:frame_h, 0:frame_w].astype(np.uint8)
 
-        frame_img = frame_tmp.astype(np.uint8)
-
-        frame_w, frame_h = frame_img.shape
-
-        template = template[0:frame_h, 0:frame_w].astype(np.uint8)
-
-        try:
             # For the quality estimator cv2.TM_CCORR_NORMED shows best results.
             quality_match = cv2.matchTemplate(frame_img, template, cv2.TM_CCORR_NORMED)
             self.quality = quality_match[0, 0]
         except Exception as e:
-            print("frame_img.shape: ", frame_img.shape)
-            print("template.shape: ", template.shape)
+            print "error"
             print e
+            self.quality = 0.0
+            return
+
+    def extract_window_around_maker_location(self, frame):
+        (xm, ym) = self.last_marker_location
+        frame_tmp = np.array(frame[ym - self.y1:ym + self.y2, xm - self.x1:xm + self.x2])
+        frame_img = frame_tmp.astype(np.uint8)
+        return frame_img
+
+    def generate_template_for_quality_estimator(self):
+        phase = np.exp((self.limit_angle_to_range(-self.orientation)) * 1j)
+        angle_threshold = 3.14 / (2 * self.order)
+        t1 = (self.kernelComplex * np.power(phase, self.order)).real > self.threshold
+        t2 = (self.kernelComplex * np.power(phase, self.order)).real < -self.threshold
+        img_t1_t2_diff = t1.astype(np.float32) - t2.astype(np.float32)
+        t3 = np.angle(self.KernelRemoveArmComplex * phase) < angle_threshold
+        t4 = np.angle(self.KernelRemoveArmComplex * phase) > -angle_threshold
+        mask = 1 - 1 * (t3 & t4)
+        template = ((1 - img_t1_t2_diff * mask) * 255).astype(np.uint8)
+        return template
