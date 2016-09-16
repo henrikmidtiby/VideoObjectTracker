@@ -11,7 +11,7 @@ import MarkerTracker
 import math
 
 
-def main(video_file_to_analyze_filename, output_filename_input, order_of_marker_input, size_of_kernel_input):
+def track_marker_in_video(video_file_to_analyze_filename, output_filename_input, order_of_marker_input, size_of_kernel_input):
     # Open video file for reading and output file for writing.
     cap = cv2.VideoCapture()
     cap.open(video_file_to_analyze_filename)
@@ -69,4 +69,4 @@ video_file_to_analyze = '/home/henrik/Dropbox/Camera Uploads/2016-07-08 06.22.55
 output_filename = 'output/positions2.txt'
 order_of_marker = 6
 size_of_kernel = 201
-main(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel)
+track_marker_in_video(video_file_to_analyze, output_filename, order_of_marker, size_of_kernel)

@@ -7,6 +7,7 @@ Marker tracker for locating n-fold edges in images using convolution.
 import cv2
 import numpy as np
 import math
+from MarkerPose import MarkerPose
 
 
 class MarkerTracker:
@@ -41,8 +42,12 @@ class MarkerTracker:
         self.x1 = int(math.floor(float(self.kernel_size)/2))
         self.x2 = int(math.ceil(float(self.kernel_size)/2))
 
+        # Information about the located marker.
+        self.pose = None
+
     @staticmethod
     def generate_symmetry_detector_kernel(order, kernel_size):
+        # type: (int, int) -> numpy.ndarray
         value_range = np.linspace(-1, 1, kernel_size)
         temp1 = np.meshgrid(value_range, value_range)
         kernel = temp1[0] + 1j * temp1[1]
@@ -69,7 +74,8 @@ class MarkerTracker:
         self.determine_marker_orientation(frame)
         self.determine_marker_quality(frame)
 
-        return max_loc
+        self.pose = MarkerPose(max_loc[0], max_loc[1], self.orientation, self.quality, self.order)
+        return self.pose
 
     def determine_marker_orientation(self, frame):
         (xm, ym) = self.last_marker_location
@@ -105,15 +111,20 @@ class MarkerTracker:
         return angle
 
     def determine_marker_quality(self, frame):
-        template = self.generate_template_for_quality_estimator()
+        (bright_regions, dark_regions) = self.generate_template_for_quality_estimator()
+        # cv2.imshow("bright_regions", 255*bright_regions)
+        # cv2.imshow("dark_regions", 255*dark_regions)
+
         try:
             frame_img = self.extract_window_around_maker_location(frame)
-            frame_w, frame_h = frame_img.shape
-            template = template[0:frame_h, 0:frame_w].astype(np.uint8)
+            (bright_mean, bright_std) = cv2.meanStdDev(frame_img, mask=bright_regions)
+            (dark_mean, dark_std) = cv2.meanStdDev(frame_img, mask=dark_regions)
 
-            # For the quality estimator cv2.TM_CCORR_NORMED shows best results.
-            quality_match = cv2.matchTemplate(frame_img, template, cv2.TM_CCORR_NORMED)
-            self.quality = quality_match[0, 0]
+            mean_difference = bright_mean - dark_mean
+            normalised_mean_difference = mean_difference / (0.5*bright_std + 0.5*dark_std)
+            # Ugly hack for translating the normalised_mean_differences to the range [0, 1]
+            temp_value_for_quality = 1 - 1/(1 + math.exp(0.75*(-7+normalised_mean_difference)))
+            self.quality = temp_value_for_quality
         except Exception as e:
             print "error"
             print e
@@ -129,11 +140,12 @@ class MarkerTracker:
     def generate_template_for_quality_estimator(self):
         phase = np.exp((self.limit_angle_to_range(-self.orientation)) * 1j)
         angle_threshold = 3.14 / (2 * self.order)
-        t1 = (self.kernelComplex * np.power(phase, self.order)).real > self.threshold
-        t2 = (self.kernelComplex * np.power(phase, self.order)).real < -self.threshold
-        img_t1_t2_diff = t1.astype(np.float32) - t2.astype(np.float32)
         t3 = np.angle(self.KernelRemoveArmComplex * phase) < angle_threshold
         t4 = np.angle(self.KernelRemoveArmComplex * phase) > -angle_threshold
-        mask = 1 - 1 * (t3 & t4)
-        template = ((1 - img_t1_t2_diff * mask) * 255).astype(np.uint8)
-        return template
+
+        signed_mask = 1 - 2 * (t3 & t4)
+        adjusted_kernel = self.kernelComplex * np.power(phase, self.order) * signed_mask
+        bright_regions = (adjusted_kernel.real < -self.threshold).astype(np.uint8)
+        dark_regions = (adjusted_kernel.real > self.threshold).astype(np.uint8)
+
+        return bright_regions, dark_regions
