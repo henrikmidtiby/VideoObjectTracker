@@ -35,21 +35,23 @@ def track_marker_in_video(video_file_to_analyze_filename, output_filename_input,
         gray_scale_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Locate marker in image.
-        (xm, ym) = tracker.locate_marker(gray_scale_image)
+        marker_pose = tracker.locate_marker(gray_scale_image)
 
         # Show and write to file information about the detected marker.
-        string_to_file = "%3d\t%3d\t%3d\t%.2f\t%.2f\n" % (counter, xm, ym, tracker.orientation, tracker.quality)
+        string_to_file = "%3d\t%3d\t%3d\t%.2f\t%.2f\n" % (
+        counter, marker_pose.x, marker_pose.y, marker_pose.theta, marker_pose.quality)
         print(string_to_file[0:-1])
         output_file.write(string_to_file)
 
         # Mark the center of the marker
-        cv2.circle(frame, (xm, ym), 20, (255, 0, 255), -1)
+        cv2.circle(frame, (marker_pose.x, marker_pose.y), 20, (255, 0, 255), -1)
+        cv2.circle(frame, (marker_pose.x, marker_pose.y), size_of_kernel_input / 2, (255, 0, 255), 1)
 
         # Mark the orientation of the detected marker
         dist = 50
-        point1 = (xm, ym)
-        point2 = (math.trunc(xm + dist * math.cos(tracker.orientation)),
-                  math.trunc(ym + dist * math.sin(tracker.orientation)))
+        point1 = (marker_pose.x, marker_pose.y)
+        point2 = (math.trunc(marker_pose.x + dist * math.cos(marker_pose.theta)),
+                  math.trunc(marker_pose.y + dist * math.sin(marker_pose.theta)))
         cv2.line(frame, point1, point2, (255, 0, 255), 2)
 
         # Show the annotated image.
